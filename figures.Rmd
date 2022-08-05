@@ -1,0 +1,303 @@
+---
+title: "Figures for LDA model"
+output:
+    html_document:
+      toc: true
+      toc_float: true 
+      theme: united
+---
+Xiyu Peng
+
+This file contains scripts to generate figures for presenting results of LDA.
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_knit$set(root.dir= normalizePath('..'))
+knitr::opts_chunk$set(error = FALSE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(ggpubr)
+library(tidyr)
+library(ggallin)
+library(patchwork)
+library(rstatix)
+library(pheatmap)
+library(ComplexHeatmap)
+library(scales)
+library(topicmodels)
+## colors
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+threecolors<-c("#7570B3","#E7298A", "#66A61E")
+seurat_colors<-hue_pal()(21)
+```
+
+
+```{r}
+## input data
+X50_res0.8 <- read.csv("~/flow_cytometry/lda/flow_17162_rerun_cluster_res1.5_and_gating_ratio.csv")
+## prepare data matrix
+X50_res0.8 %>% select(starts_with("cluster"))->data_matrix
+## Only focus on first 20 clusters
+data_matrix<-data_matrix[,1:20]
+X50_res0.8$res<-as.factor(X50_res0.8$BOR)
+X50_res0.8$time<-as.factor(X50_res0.8$time)
+levels(X50_res0.8$res)<-c("CR/PR","PD/SD","CR/PR","PD/SD")
+X50_res0.8$week<-X50_res0.8$time
+levels(X50_res0.8$week)<-c("0","3","6")
+```
+
+```{r,eval=FALSE}
+require(slam)
+
+count_matrix_triplet <- as.simple_triplet_matrix(data_matrix)
+
+lda<-LDA(count_matrix_triplet, control = list(seed = 2021, burnin = 1000,thin = 100, iter = 1000), k = 3, method = "Gibbs")
+topics(lda)
+terms(lda,10)
+para<-posterior(lda)
+
+topics(lda)
+terms(lda,10)
+para<-posterior(lda)
+
+str(lda)
+save(lda, file = "~/flow_cytometry/lda/lda_init_rerun2.Rdata")
+```
+
+```{r}
+load(file = "~/flow_cytometry/lda/lda_init_rerun2.Rdata")
+```
+
+* Fig 3a. beta within each topic
+
+```{r}
+#### update to X50_res0.8
+X50_res0.8$topics<-topics(lda)
+para<-posterior(lda)
+X50_res0.8<-as.data.frame(cbind(X50_res0.8,para$topics))
+
+### beta
+ap_topics <- tidy(lda, matrix = "beta")
+ap_topics$topic<-as.factor(paste0("topic",ap_topics$topic))
+levels(ap_topics$topic)<-c("Activation topic", "Naive topic", "Exhaustion topic")
+
+ap_topics$term<-gsub("cluster","",ap_topics$term)
+term_reorder<-as.character(c(0,2,6,11,9,8,7,1,4,10,12,14,15,3,5,13,16,17,18,19))
+ggbarplot(ap_topics, x = "term", y = "beta",color = "topic",fill = "topic",palette = c("#D55E00", "#009E73", "#0072B2"),facet.by = "topic",nrow = 3)+xlab("cluster")+scale_x_discrete(limits = term_reorder)
+```
+
+* Fig.3b and supplementary Fig.S1. Lift of clusters for each topic
+
+```{r}
+### calcualte the lift
+wordcounts <- colSums(data_matrix)
+logbeta <- lda@beta
+emp.prob <- log(wordcounts) - log(sum(wordcounts))
+lift <- logbeta - rep(emp.prob, each = nrow(logbeta))
+colnames(lift)<-lda@terms
+lift<-as.data.frame(lift)
+lift$topics<-paste0("topic",1:3)
+
+#### make barplots for the lift
+new_label<-c("Activation Topic", "Naive Topic","Exhaustion Topic")
+names(new_label)<-c("topic1","topic2","topic3")
+
+### show top 10 clusters for each topic
+lift_top_terms <- lift %>% gather(.,key = cluster,value = lift,-topics) %>%
+  group_by(topics) %>%
+  slice_max(lift, n = 10) %>% 
+  ungroup() %>%
+  arrange(topics, -lift)
+
+lift_top_terms %>%
+  mutate(cluster = reorder_within(cluster, lift, topics)) %>%
+  ggplot(aes(lift, cluster, fill = factor(topics))) +
+  geom_col(show.legend = FALSE,orientation = "y") +
+  facet_wrap(~ topics, scales = "free",labeller = labeller(topics = new_label)) + 
+  scale_y_reordered()+theme_bw()+scale_fill_manual(values=c("#D55E00", "#009E73", "#0072B2"))
+
+### show all cell types for each topic
+lift_top_terms <- lift %>% gather(.,key = cluster,value = lift,-topics) %>%
+  group_by(topics) %>%
+  ungroup() %>%
+  arrange(topics, -lift)
+
+lift_top_terms %>%
+  mutate(cluster = reorder_within(cluster, lift, topics)) %>%
+  ggplot(aes(lift, cluster, fill = factor(topics))) +
+  geom_col(show.legend = FALSE,orientation = "y") +
+  facet_wrap(~ topics, scales = "free",labeller = labeller(topics = new_label)) + 
+ scale_x_continuous(trans = ssqrt_trans,breaks = c(1.5,0.5,0,-0.5,-1.5,-5,-10)) +
+  scale_y_reordered()+theme_bw()+scale_fill_manual(values=c("#D55E00", "#009E73", "#0072B2"))
+```
+
+* Fig.3c. heatmap showing gamma (exclude pt 17-162-08 with only one sample)
+
+```{r}
+## parameters for heatmap
+annotation_row = data.frame(
+  time = X50_res0.8$time,
+  Immunotype = as.factor(X50_res0.8$imtype),
+  BOR = X50_res0.8$BOR,
+  Toxicity = X50_res0.8$tox,
+  topics = as.factor(X50_res0.8$topics)
+)
+
+ann_colors = list(
+  BOR = c(CR = "white",PR = "white", SD = "firebrick",PD = "firebrick"),
+  Toxicity = c(N = "white",Y = "darkblue"),
+  topics = c(`1` = "#7570B3",`2` = "#E7298A",`3` = "#66A61E",Activation = "#7570B3", Naive = "#E7298A" , Exhaustion ="#66A61E" ),
+  time = c(week0 = "white",week3 = "lightblue",week6 = "darkblue",A = "white",B = "lightblue",C = "darkblue"),
+  Timepoint = c(week0 = "white",week3 = "lightblue",week6 = "darkblue",A = "white",B = "lightblue",C = "darkblue"),
+  Immunotype = c("LAG-" = "#7570B3", "LAG+" = "#E7298A", PRO = "#66A61E"),
+  Group = c(group1 = "#7570B3", group2 = "#E7298A", group3 = "#66A61E",group4 = "#D95F02")
+)
+
+annotation_column = data.frame(
+  Timepoint =  factor(rep(c("week0", "week3", "week6"), each = 3))
+)
+
+annotation_column2 = data.frame(
+  topics = factor(rep(c("Activation","Naive","Exhaustion"),each = 3))
+)
+
+rownames(annotation_row)<-X50_res0.8$sample
+rownames(para$topics)<-X50_res0.8$sample
+```
+
+```{r,fig.width=12,fig.height=12}
+## reshape the data
+## gamma (topic fraction)
+gamma_data<-as.data.frame(para$topics)
+gamma_data$pt<-as.factor(X50_res0.8$pt)
+gamma_data$time<-as.factor(X50_res0.8$time)
+gamma_wide_wna<-gamma_data %>% arrange(pt, time)%>%reshape(.,timevar = "time",idvar = "pt",direction = "wide") ## keep missing value as NA in the matrix
+rownames(gamma_wide_wna)<-gamma_wide_wna$pt
+## meta data
+pt_meta<-X50_res0.8 %>% select(pt,imtype,tox,BOR) %>% arrange(pt) %>% distinct(pt,.keep_all = TRUE)
+colnames(pt_meta)<-c("pt","Immunotype","Toxicity","BOR")
+rownames(pt_meta)<-pt_meta$pt
+
+## remove pt 17-162-08
+pt_meta_wo6<-pt_meta[-6,]  
+
+# determine sample order
+ourdist<-dist(gamma_wide_wna[-6,-1])
+re<-hclust(ourdist)
+
+gamma_wide_wna_reorder<-gamma_wide_wna[-6,order(colnames(gamma_wide_wna))]
+col_labels<-rep(c("week0","week3","week6"),3)
+#ComplexHeatmap::pheatmap(gamma_wide_wna_reorder[,-10],cluster_cols = FALSE,drop_levels = TRUE,annotation_colors = ann_colors,annotation_row = pt_meta_wo6[,2:4],col = colorRampPalette(c("navy", "white", "firebrick3"))(50),fontsize_row= 5,labels_col = col_labels,annotation_col = annotation_column2, column_split = annotation_column2$topics)
+```
+
+```{r,fig.width=12,fig.height=3}
+## three small heatmap for individual topic
+ComplexHeatmap::pheatmap(t(gamma_wide_wna_reorder[re$order,1:3]),cluster_rows = FALSE, drop_levels = TRUE,annotation_colors = ann_colors,cluster_cols = FALSE,annotation_col = pt_meta_wo6[re$order,2:4],col = colorRampPalette(c("navy", "white", "firebrick3"))(50),fontsize_col= 5,labels_row = c("week0","week3","week6"),treeheight_col = 10)
+ComplexHeatmap::pheatmap(t(gamma_wide_wna_reorder[re$order,4:6]),cluster_rows = FALSE,cluster_cols = FALSE, drop_levels = TRUE,annotation_colors = ann_colors,annotation_col = pt_meta_wo6[re$order,2:4],col = colorRampPalette(c("navy", "white", "firebrick3"))(50),fontsize_col= 5,labels_row = c("week0","week3","week6"),treeheight_col = 10)
+ComplexHeatmap::pheatmap(t(gamma_wide_wna_reorder[re$order,7:9]),cluster_rows = FALSE,cluster_cols = FALSE, drop_levels = TRUE,annotation_colors = ann_colors,annotation_col = pt_meta_wo6[re$order,2:4],col = colorRampPalette(c("navy", "white", "firebrick3"))(50),fontsize_col= 5,labels_row = c("week0","week3","week6"),treeheight_col = 10)
+```
+
+* Fig 3d. topic evolution of three groups
+
+```{r}
+integrate_data<-cbind(annotation_row,para$topics,X50_res0.8$pt,X50_res0.8$week)
+colnames(integrate_data)<-c("time","imtype","BOR","tox","topics","topic1","topic2","topic3","pt","week")
+color <- c(group1 = "#7570B3", group2 = "#E7298A", group3 = "#66A61E")
+pt_withB<-integrate_data %>% filter(time == "B") %>% select(pt,topics)
+colnames(pt_withB)<-c("pt","Group")
+pt_withB$Group<-paste0("group",pt_withB$Group)
+integrate_data3<-merge(integrate_data,pt_withB,by.x = "pt",by.y = "pt")
+p1<-ggboxplot(integrate_data3, x = "week", y = "topic1",add = "point",fill = "Group",color = "black",palette = color,facet.by = c("Group"))+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+facet_wrap("Group",nrow = 1)+ylab("Prop. of activation topic")
+p2<-ggboxplot(integrate_data3, x = "week", y = "topic2",add = "point",fill = "Group",color = "black",palette = color,facet.by = c("Group"))+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+facet_wrap("Group",nrow = 1)+ylab("Prop. of naive topic")
+p3<-ggboxplot(integrate_data3, x = "week", y = "topic3",add = "point",fill = "Group",color = "black",palette = color,facet.by = c("Group"))+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+facet_wrap("Group",nrow = 1)+ylab("Prop. of exhaustion topic")
+wrap_plots(p1,p2,p3,nrow = 3)
+```
+
+* Figure 4-6. Dynamic in topic proportions and representative cluster abundances
+
+```{r}
+colnames(para$topics)<-c("topic1","topic2","topic3")
+combined_data<-cbind(X50_res0.8,para$topics)
+combined_data$time<-as.factor(X50_res0.8$time)
+ps<-list()
+select_cluster<- c("X.cluster12","X.cluster8","X.cluster16","X.cluster4","X.cluster9")
+colors<-seurat_colors[c(13,9,17,5,10)]
+names(colors)<-select_cluster
+for (cluster in select_cluster){
+  p<-ggboxplot(combined_data, x = "week", y = cluster,add = "point",color = "black",fill = colors[cluster],palette = threecolors)+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ggtitle(substring(cluster,3))+
+    ylab("Percentage")
+  ps[[cluster]]<-p
+}
+select_cluster<- c("X.cluster2","X.cluster6","X.cluster0","X.cluster11")
+colors<-seurat_colors[c(3,7,1,12)]
+names(colors)<-select_cluster
+for (cluster in select_cluster){
+  p<-ggboxplot(combined_data, x = "week", y = cluster,add = "point",color = "black",fill = colors[cluster],palette = threecolors)+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ggtitle(substring(cluster,3))+
+    ylab("Percentage")
+  ps[[cluster]]<-p
+}
+select_cluster<- c("X.cluster14","X.cluster3","X.cluster5","X.cluster13")
+colors<-seurat_colors[c(15,4,6,14)]
+names(colors)<-select_cluster
+for (cluster in select_cluster){
+  p<-ggboxplot(combined_data, x = "week", y = cluster,add = "point",color = "black",fill = colors[cluster],palette = threecolors)+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ggtitle(substring(cluster,3))+
+    ylab("Percentage")
+  ps[[cluster]]<-p
+}
+layout1<-"
+ABCD
+FGHI
+KLMN
+"
+#wrap_plots(ps[1:12] ,guides = 'collect',design = layout1)
+ps[[1]]<-ps[[1]]+ggtitle("12:CD8 Tem")
+ps[[2]]<-ps[[2]]+ggtitle("8:CD4 Tcm/em")
+ps[[3]]<-ps[[3]]+ggtitle("16:CD4-CD8-")
+ps[[4]]<-ps[[4]]+ggtitle("4:CD4 Tem")
+ps[[5]]<-ps[[5]]+ggtitle("9:Treg")
+wrap_plots(ps[1:5] ,guides = 'collect',nrow = 1)
+ps[[6]]<-ps[[6]]+ggtitle("2:CD4 Naive")
+ps[[7]]<-ps[[7]]+ggtitle("6:CD8 Naive")
+ps[[8]]<-ps[[8]]+ggtitle("0:CD4 Naive")
+ps[[9]]<-ps[[9]]+ggtitle("11:CD4 Naive Treg")
+wrap_plots(ps[6:9] ,guides = 'collect',nrow = 1)
+ps[[10]]<-ps[[10]]+ggtitle("14:CD4 Tem")
+ps[[11]]<-ps[[11]]+ggtitle("3:CD8 Temra")
+ps[[12]]<-ps[[12]]+ggtitle("5:CD8 Temra")
+ps[[13]]<-ps[[13]]+ggtitle("13:CD4-CD8-")
+wrap_plots(ps[10:13] ,guides = 'collect',nrow = 1)
+
+```
+
+```{r}
+pss<-list()
+pss[["topic1"]]<- ggboxplot(combined_data, x = "week", y = "topic1",add = "point",color = "black",fill = "time",palette = threecolors)+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ylab(label = "Topic Proportion")+ggtitle("Activation Topic")
+pss[["topic2"]]<- ggboxplot(combined_data, x = "week", y = "topic2",add = "point",color = "black",fill = "time",palette = threecolors)+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ ylab(label = "Topic Proportion")+ggtitle("Naive Topic")
+pss[["topic3"]]<- ggboxplot(combined_data, x = "week", y = "topic3",add = "point",color = "black",fill = "time", palette = threecolors)+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ylab(label = "Topic Proportion")+ggtitle("Exhaustion Topic")
+wrap_plots(pss[1:3] ,guides = 'collect')
+```
+
+* correlation to immunotype and toxicity
+
+```{r,fig.width=4,fig.height=4}
+X50_res0.8$time<-as.factor(X50_res0.8$time)
+ggboxplot(X50_res0.8[1:135,], x = "week", y = "ratio_3and5_to_6",add = "point",color = "black",fill = "imtype",palette = c("#7570B3","#E7298A", "#66A61E"),facet.by = c("imtype"))+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+ylab("CD8 Temra/Tn")
+```
+
+```{r,fig.height=4, fig.width=4}
+ggboxplot(integrate_data, x = "week", y = "topic2",add = "point",color = "black",fill = "tox",palette = threecolors,facet.by = c("tox"),panel.labs = list( tox=c( "N (grade1-2)" , "Y (grade3-4)") ) )+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ylab(label = "Naive Topic Proportion")
+```
+
+
+
+
+
+
+
+
+
