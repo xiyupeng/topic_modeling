@@ -2,6 +2,8 @@
 # Author: Xiyu Peng
 # single cell analysis for flow cytometry data
 #
+# Codes below requires at least 200G memory space 
+#
 
 
 library(Seurat)
