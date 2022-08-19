@@ -91,7 +91,7 @@ selected_cols<-c(hue_pal()(20)[c(1,3,7,12)],"gray")
 pt17162ext09$activation_group<-Idents(pt17162ext09)
 pt17162ext09$activation_group[!Idents(pt17162ext09)%in% c(0,2,6,11)]<-21
 #DimPlot(pt17162ext09, label = T, group.by = "activation_group",cols = selected_cols)
-p_list<-downsamplebygroup(subset(pt17162ext09, idents = 0:19),"time",5000, group.by = "activation_group",cols = selected_cols,label = TRUE)
+p_list<-downsamplebygroup(subset(pt17162ext09, idents = 0:19),"time",5000, group.by = "activation_group",cols = selected_cols)
 wrap_plots(p_list ,guides = 'collect', design = layout1)
 ```
 

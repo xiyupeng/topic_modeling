@@ -2,7 +2,7 @@
 # Author: Xiyu Peng
 # single cell analysis for flow cytometry data
 #
-# Codes below requires at least 200G memory space 
+# Codes below requires at least 250G memory space 
 #
 
 
@@ -175,6 +175,10 @@ for(pt in patients){
     pt_seurat <- RunUMAP(pt_seurat, dims = 1:26,min.dist = 0.3)
     saveRDS(pt_seurat,file= paste0("/gpfs/mskmind_ess/pengx1/flow/analysis/seurat_pt",pt,"redo.rds"))
 }
+
+### ridge plots
+
+RidgePlot(object = pool_X50, features = 'KI67',idents = c(4,8,9,12,16),sort = "increasing",cols = c('4' = "#C09B00" , '8' = "#00BB4E", '9' = "#00BF7D", '12' = "#00BAE0",'16' = "#C77CFF" ))
 
 
 sessionInfo()

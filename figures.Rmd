@@ -33,7 +33,8 @@ library(topicmodels)
 ## colors
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 threecolors<-c("#7570B3","#E7298A", "#66A61E")
-seurat_colors<-hue_pal()(21)
+topiccolors<-c("#D55E00", "#009E73", "#0072B2")
+seurat_colors<-hue_pal()(20)
 ```
 
 
@@ -276,9 +277,9 @@ wrap_plots(ps[10:13] ,guides = 'collect',nrow = 1)
 
 ```{r}
 pss<-list()
-pss[["topic1"]]<- ggboxplot(combined_data, x = "week", y = "topic1",add = "point",color = "black",fill = "time",palette = threecolors)+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ylab(label = "Topic Proportion")+ggtitle("Activation Topic")
-pss[["topic2"]]<- ggboxplot(combined_data, x = "week", y = "topic2",add = "point",color = "black",fill = "time",palette = threecolors)+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ ylab(label = "Topic Proportion")+ggtitle("Naive Topic")
-pss[["topic3"]]<- ggboxplot(combined_data, x = "week", y = "topic3",add = "point",color = "black",fill = "time", palette = threecolors)+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ylab(label = "Topic Proportion")+ggtitle("Exhaustion Topic")
+pss[["topic1"]]<- ggboxplot(combined_data, x = "week", y = "topic1",add = "point",color = "black", fill = topiccolors[1])+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ylab(label = "Topic Proportion")+ggtitle("Activation Topic")
+pss[["topic2"]]<- ggboxplot(combined_data, x = "week", y = "topic2",add = "point",color = "black",fill = topiccolors[2])+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ ylab(label = "Topic Proportion")+ggtitle("Naive Topic")
+pss[["topic3"]]<- ggboxplot(combined_data, x = "week", y = "topic3",add = "point",color = "black",fill = topiccolors[3])+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ylab(label = "Topic Proportion")+ggtitle("Exhaustion Topic")
 wrap_plots(pss[1:3] ,guides = 'collect')
 ```
 
@@ -286,11 +287,11 @@ wrap_plots(pss[1:3] ,guides = 'collect')
 
 ```{r,fig.width=4,fig.height=4}
 X50_res0.8$time<-as.factor(X50_res0.8$time)
-ggboxplot(X50_res0.8[1:135,], x = "week", y = "ratio_3and5_to_6",add = "point",color = "black",fill = "imtype",palette = c("#7570B3","#E7298A", "#66A61E"),facet.by = c("imtype"))+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+ylab("CD8 Temra/Tn")
+ggboxplot(X50_res0.8[1:135,], x = "week", y = "ratio_3and5_to_6",add = "point",color = "black",fill = topiccolors[3],palette = c("#7570B3","#E7298A", "#66A61E"),facet.by = c("imtype"))+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+ylab("CD8 Temra/Tn")
 ```
 
 ```{r,fig.height=4, fig.width=4}
-ggboxplot(integrate_data, x = "week", y = "topic2",add = "point",color = "black",fill = "tox",palette = threecolors,facet.by = c("tox"),panel.labs = list( tox=c( "N (grade1-2)" , "Y (grade3-4)") ) )+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ylab(label = "Naive Topic Proportion")
+ggboxplot(integrate_data, x = "week", y = "topic2",add = "point",color = "black",fill = topiccolors[2],palette = threecolors,facet.by = c("tox"),panel.labs = list( tox=c( "N (grade1-2)" , "Y (grade3-4)") ) )+geom_line(aes(group = pt),color = 'lightgray')+theme(legend.position = "none")+ylab(label = "Naive Topic Proportion")
 ```
 
 
