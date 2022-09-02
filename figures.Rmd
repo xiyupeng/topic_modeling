@@ -89,7 +89,8 @@ levels(ap_topics$topic)<-c("Activation topic", "Naive topic", "Exhaustion topic"
 
 ap_topics$term<-gsub("cluster","",ap_topics$term)
 term_reorder<-as.character(c(0,2,6,11,9,8,7,1,4,10,12,14,15,3,5,13,16,17,18,19))
-ggbarplot(ap_topics, x = "term", y = "beta",color = "topic",fill = "topic",palette = c("#D55E00", "#009E73", "#0072B2"),facet.by = "topic",nrow = 3)+xlab("cluster")+scale_x_discrete(limits = term_reorder)
+ggbarplot(ap_topics, x = "term", y = "beta",color = "topic",fill = "topic",palette = c("#D55E00", "#009E73", "#0072B2"),facet.by = "topic",nrow = 3)+xlab("T cell cluster")+scale_x_discrete(limits = term_reorder)+ylab("topic weight")
+#c("#D55E00", "#009E73", "#0072B2")
 ```
 
 * Fig.3b and supplementary Fig.S1. Lift of clusters for each topic
@@ -120,7 +121,8 @@ lift_top_terms %>%
   ggplot(aes(lift, cluster, fill = factor(topics))) +
   geom_col(show.legend = FALSE,orientation = "y") +
   facet_wrap(~ topics, scales = "free",labeller = labeller(topics = new_label)) + 
-  scale_y_reordered()+theme_bw()+scale_fill_manual(values=c("#D55E00", "#009E73", "#0072B2"))
+  scale_y_reordered()+theme_bw()+scale_fill_manual(values=c("#D55E00", "#009E73", "#0072B2"))+
+  xlab("lift (log-ratio of topic weight over T cell cluster frequency)")+ylab("T cell cluster")
 
 ### show all cell types for each topic
 lift_top_terms <- lift %>% gather(.,key = cluster,value = lift,-topics) %>%
@@ -134,10 +136,11 @@ lift_top_terms %>%
   geom_col(show.legend = FALSE,orientation = "y") +
   facet_wrap(~ topics, scales = "free",labeller = labeller(topics = new_label)) + 
  scale_x_continuous(trans = ssqrt_trans,breaks = c(1.5,0.5,0,-0.5,-1.5,-5,-10)) +
-  scale_y_reordered()+theme_bw()+scale_fill_manual(values=c("#D55E00", "#009E73", "#0072B2"))
+  scale_y_reordered()+theme_bw()+scale_fill_manual(values=c("#D55E00", "#009E73", "#0072B2"))+
+  xlab("lift (log-ratio of topic weight over T cell cluster frequency)")+ylab("T cell cluster")
 ```
 
-* Fig.3c. heatmap showing gamma (exclude pt 17-162-08 with only one sample)
+* Fig.4a. heatmap showing gamma (exclude pt 17-162-08 with only one sample)
 
 ```{r}
 ## parameters for heatmap
@@ -188,8 +191,17 @@ rownames(pt_meta)<-pt_meta$pt
 pt_meta_wo6<-pt_meta[-6,]  
 
 # determine sample order
+#ourdist<-dist(gamma_wide_wna[-6,-1])
+#re<-hclust(ourdist)
+#pt_meta_wo6<-pt_meta[-6,]
 ourdist<-dist(gamma_wide_wna[-6,-1])
 re<-hclust(ourdist)
+group<-as.data.frame(cutree(hclust(ourdist),5))
+colnames(group)<-"Group"
+pt_meta_wo6<-cbind(pt_meta_wo6,group)
+pt_meta_wo6$Group<-factor(pt_meta_wo6$Group)
+col_labels<-rep(c("Activation","Naive","Exhaustion"),3)
+levels(pt_meta_wo6$Group)<-c("group4","group3","group1","group2","group1")
 
 gamma_wide_wna_reorder<-gamma_wide_wna[-6,order(colnames(gamma_wide_wna))]
 col_labels<-rep(c("week0","week3","week6"),3)
@@ -198,28 +210,41 @@ col_labels<-rep(c("week0","week3","week6"),3)
 
 ```{r,fig.width=12,fig.height=3}
 ## three small heatmap for individual topic
-ComplexHeatmap::pheatmap(t(gamma_wide_wna_reorder[re$order,1:3]),cluster_rows = FALSE, drop_levels = TRUE,annotation_colors = ann_colors,cluster_cols = FALSE,annotation_col = pt_meta_wo6[re$order,2:4],col = colorRampPalette(c("navy", "white", "firebrick3"))(50),fontsize_col= 5,labels_row = c("week0","week3","week6"),treeheight_col = 10)
-ComplexHeatmap::pheatmap(t(gamma_wide_wna_reorder[re$order,4:6]),cluster_rows = FALSE,cluster_cols = FALSE, drop_levels = TRUE,annotation_colors = ann_colors,annotation_col = pt_meta_wo6[re$order,2:4],col = colorRampPalette(c("navy", "white", "firebrick3"))(50),fontsize_col= 5,labels_row = c("week0","week3","week6"),treeheight_col = 10)
-ComplexHeatmap::pheatmap(t(gamma_wide_wna_reorder[re$order,7:9]),cluster_rows = FALSE,cluster_cols = FALSE, drop_levels = TRUE,annotation_colors = ann_colors,annotation_col = pt_meta_wo6[re$order,2:4],col = colorRampPalette(c("navy", "white", "firebrick3"))(50),fontsize_col= 5,labels_row = c("week0","week3","week6"),treeheight_col = 10)
+ComplexHeatmap::pheatmap(t(gamma_wide_wna_reorder[re$order,1:3]),cluster_rows = FALSE, drop_levels = TRUE,annotation_colors = ann_colors,annotation_col = pt_meta_wo6[re$order,2:5],col = colorRampPalette(c("navy", "white", "firebrick3"))(50),fontsize_col= 5,labels_row = c("week0","week3","week6"),treeheight_col = 10,cluster_cols = FALSE)
+ComplexHeatmap::pheatmap(t(gamma_wide_wna_reorder[re$order,4:6]),cluster_rows = FALSE, cluster_cols = FALSE, drop_levels = TRUE,annotation_colors = ann_colors,annotation_col = pt_meta_wo6[re$order,2:5],col = colorRampPalette(c("navy", "white", "firebrick3"))(50),fontsize_col= 5,labels_row = c("week0","week3","week6"),treeheight_col = 10)
+ComplexHeatmap::pheatmap(t(gamma_wide_wna_reorder[re$order,7:9]),cluster_rows = FALSE, drop_levels = TRUE,annotation_colors = ann_colors,annotation_col = pt_meta_wo6[re$order,2:5],col = colorRampPalette(c("navy", "white", "firebrick3"))(50),fontsize_col= 5,labels_row = c("week0","week3","week6"),treeheight_col = 10,cluster_cols = FALSE)
 ```
 
-* Fig 3d. topic evolution of three groups
+* Fig 4b. topic evolution of three groups
 
-```{r}
+```{r,fig.width=12,fig.height=12}
+color <- c(group1 = "#7570B3", group2 = "#E7298A", group3 = "#66A61E",group4 = "#D95F02")
+## reorganize the data
 integrate_data<-cbind(annotation_row,para$topics,X50_res0.8$pt,X50_res0.8$week)
 colnames(integrate_data)<-c("time","imtype","BOR","tox","topics","topic1","topic2","topic3","pt","week")
-color <- c(group1 = "#7570B3", group2 = "#E7298A", group3 = "#66A61E")
-pt_withB<-integrate_data %>% filter(time == "B") %>% select(pt,topics)
-colnames(pt_withB)<-c("pt","Group")
-pt_withB$Group<-paste0("group",pt_withB$Group)
-integrate_data3<-merge(integrate_data,pt_withB,by.x = "pt",by.y = "pt")
-p1<-ggboxplot(integrate_data3, x = "week", y = "topic1",add = "point",fill = "Group",color = "black",palette = color,facet.by = c("Group"))+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+facet_wrap("Group",nrow = 1)+ylab("Prop. of activation topic")
-p2<-ggboxplot(integrate_data3, x = "week", y = "topic2",add = "point",fill = "Group",color = "black",palette = color,facet.by = c("Group"))+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+facet_wrap("Group",nrow = 1)+ylab("Prop. of naive topic")
-p3<-ggboxplot(integrate_data3, x = "week", y = "topic3",add = "point",fill = "Group",color = "black",palette = color,facet.by = c("Group"))+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+facet_wrap("Group",nrow = 1)+ylab("Prop. of exhaustion topic")
-wrap_plots(p1,p2,p3,nrow = 3)
+
+integrate_data2<-merge(integrate_data,pt_meta_wo6[,c(1,5)],by.x = "pt",by.y = "pt")  ## add assigned group
+integrate_data_reformat<-integrate_data2 %>% 
+  gather(key = "Topic", value = "Proportion",topic1, topic2, topic3)
+### the figure
+new_label<-c("Activation Topic", "Naive Topic","Exhaustion Topic")
+names(new_label)<-c("topic1","topic2","topic3")
+p1<-integrate_data_reformat %>%
+  filter(Group == "group1") %>%
+  ggboxplot(.,x = "week", y = "Proportion",add = "point",fill = color["group1"])+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+facet_wrap(vars(Topic),nrow = 1,labeller = labeller(Topic = new_label))
+p2<-integrate_data_reformat %>%
+  filter(Group == "group2") %>%
+  ggboxplot(.,x = "week", y = "Proportion",add = "point",fill = color["group2"])+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+facet_wrap(vars(Topic),nrow = 1,labeller = labeller(Topic = new_label))
+p3<-integrate_data_reformat %>%
+  filter(Group == "group3") %>%
+  ggboxplot(.,x = "week", y = "Proportion",add = "point",fill = color["group3"])+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+facet_wrap(vars(Topic),nrow = 1,labeller = labeller(Topic = new_label))
+p4<-integrate_data_reformat %>%
+  filter(Group == "group4") %>%
+  ggboxplot(.,x = "week", y = "Proportion",add = "point",fill = color["group4"])+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+facet_wrap(vars(Topic),nrow = 1,labeller = labeller(Topic = new_label))
+wrap_plots(p1,p2,p3,p4,nrow = 4)
 ```
 
-* Figure 4-6. Dynamic in topic proportions and representative cluster abundances
+* Figure 5-7. Dynamic in topic proportions and representative cluster abundances
 
 ```{r}
 colnames(para$topics)<-c("topic1","topic2","topic3")
@@ -295,7 +320,9 @@ ggboxplot(integrate_data, x = "week", y = "topic2",add = "point",color = "black"
 ```
 
 
-
+```{r,fig.height=4, fig.width=4}
+ggboxplot(integrate_data, x = "tox", y = "topic2",add = "point",color = "black",fill = topiccolors[2],palette = threecolors,facet.by = c("week"),panel.labs = list( week=c( "week 0" , "week 3", "week 6") ) )+theme(legend.position = "none")+ylab(label = "Naive Topic Proportion")+xlab("Toxicity")
+```
 
 
 

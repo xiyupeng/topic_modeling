@@ -63,6 +63,7 @@ selected_cols<-c("gray",hue_pal()(20)[c(5,9,10,13,17)])
 pt1716205$activation_group<-Idents(pt1716205)
 pt1716205$activation_group[!Idents(pt1716205)%in% c(4,8,12,16,9)]<-0
 #DimPlot(pt1716205, label = T, group.by = "activation_group",cols = selected_cols)
+DimPlot(subset(pt1716205, idents = 0:19),reduction = "umap", label = TRUE)
 p_list<-downsamplebygroup(subset(pt1716205, idents = 0:19),"time",20000, group.by = "activation_group",cols = selected_cols,label = TRUE)
 layout1<-"
 ABC

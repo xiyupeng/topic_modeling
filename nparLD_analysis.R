@@ -4,7 +4,6 @@
 #
 
 
-
 library(tidyverse)
 library(ggpubr)
 library(patchwork)
@@ -14,6 +13,11 @@ merge.data <- read.csv("~/flow_cytometry/lda/merge_data_X50_1.5_new.csv")
 rm_samples<-c("17-162-32C","17-162-34B","17-162-07B")  ## not contains enough cells
 merge.data<-merge.data[!merge.data$sample %in% rm_samples,]
 merge.data %>% select(starts_with("cluster")) %>% colnames()->colnames_data
+
+merge.data$res<-factor(merge.data$res)
+levels(merge.data$res)
+levels(merge.data$res)<-c("PD/SD","CR/PR")
+
 merge.data.reformat<-merge.data %>% gather(.,key = "cluster",value = "freq",colnames_data)
 
 library(nparLD)
@@ -79,7 +83,7 @@ resultdf<-as.data.frame(resultdf)
 ## adjust pvalue with selected columns
 select_col<-c("p-value.mod.imtype","p-value.mod.res","p-value.mod.tox","p-value.imtype:time","p-value.res:time","p-value.tox:time")
 adj_pvalues<-resultdf %>% 
-  select(select_col) %>% 
+  dplyr::select(select_col) %>% 
   mutate(across(select_col,p.adjust,method = "BH"))
 colnames(adj_pvalues)<-paste0("adj.",colnames(adj_pvalues))
 resultdf<-cbind(resultdf,adj_pvalues)
@@ -90,52 +94,51 @@ write.csv(resultdf,file = "~/flow_cytometry/lda/single_cluster_stat_analysis.csv
 
 #### make boxplots
 colors<-c("#D55E00", "#009E73", "#0072B2")
+merge.data.reformat$week<-as.factor(merge.data.reformat$time)
+levels(merge.data.reformat$week)<-c("0","3","6")
 ## immunotypes
 plot_clusters<-paste("cluster",0:19,sep = "")
 ps_imtype<-list()
-for (cluster in plot_clusters){
+for (c in plot_clusters){
   ## boxplot with data points connected with lines
-  #p<-ggplot(merge.data,aes(x = time, y = !!ensym(cluster)))+geom_boxplot(aes(color = imtype))+geom_point(aes(color = imtype))+facet_grid(.~imtype)+geom_line(aes(group = pt),color = 'gray')+theme_minimal()
-  p<-ggboxplot(merge.data, x = "time", y = cluster,add = "point",color = "imtype",palette = "jco",facet.by = "imtype")+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")
-  ps_imtype[[cluster]]<-p
+  p<-merge.data.reformat %>% 
+    mutate (freq = freq/100) %>%
+    filter(cluster == c) %>%
+    ggboxplot(.,x = "week", y = "freq", add = "point", fill = "imtype", palette = colors, facet.by = "imtype")+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+ggtitle(c)+ylab("Percentage")
+  ps_imtype[[c]]<-p
 }
-layout1<-"
-ABCD
-EFGH
-IJKL
-MNOP
-"
+
 wrap_plots(ps_imtype[1:20] ,guides = 'collect')
-ggsave("imtype_clusters.png",width = 16, height = 16,units = "in")
+ggsave("imtype_clusters.png",width = 20, height = 20,units = "in")
 
 
 
 ## response 
-merge.data$res<-factor(merge.data$res)
-levels(merge.data$res)
-levels(merge.data$res)<-c("PD/SD","CR/PR")
 ps_res<-list()
-for (cluster in plot_clusters){
+for (c in plot_clusters){
   ## boxplot with data points connected with lines
-  #p<-ggplot(merge.data,aes(x = time, y = !!ensym(cluster)))+geom_boxplot(aes(color = imtype))+geom_point(aes(color = imtype))+facet_grid(.~imtype)+geom_line(aes(group = pt),color = 'gray')+theme_minimal()
-  p<-ggboxplot(merge.data, x = "time", y = cluster,add = "point",color = "res",palette = "jco",facet.by = "res")+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")
-  ps_res[[cluster]]<-p
+  p<-merge.data.reformat %>% 
+    mutate (freq = freq/100) %>%
+    filter(cluster == c) %>%
+    ggboxplot(.,x = "week", y = "freq", add = "point", fill = "res", palette = colors, facet.by = "res")+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+ggtitle(c)+ylab("Percentage")
+  ps_res[[c]]<-p
 }
 
 wrap_plots(ps_res[1:20] ,guides = 'collect')
-ggsave("res_clusters.png",width = 12, height = 15,units = "in")
+ggsave("res_clusters.png",width = 16, height = 20,units = "in")
 
 
 ## tox 
 ps_tox<-list()
-for (cluster in plot_clusters){
-  ## boxplot with data points connected with lines
-  #p<-ggplot(merge.data,aes(x = time, y = !!ensym(cluster)))+geom_boxplot(aes(color = imtype))+geom_point(aes(color = imtype))+facet_grid(.~imtype)+geom_line(aes(group = pt),color = 'gray')+theme_minimal()
-  p<-ggboxplot(merge.data, x = "time", y = cluster,add = "point",color = "tox",palette = "jco",facet.by = "tox")+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")
-  ps_tox[[cluster]]<-p
+for (c in plot_clusters){
+  p<-merge.data.reformat %>% 
+    mutate (freq = freq/100) %>%
+    filter(cluster == c) %>%
+    ggboxplot(.,x = "week", y = "freq", add = "point", fill = "tox", palette = colors, facet.by = "tox")+geom_line(aes(group = pt),color = 'gray')+theme(legend.position = "none")+ggtitle(c)+ylab("Percentage")
+  ps_tox[[c]]<-p
 }
 
 wrap_plots(ps_tox[1:20] ,guides = 'collect')
-ggsave("tox_clusters.png",width = 12, height = 15,units = "in")
+ggsave("tox_clusters.png",width = 16, height = 20,units = "in")
 
 
