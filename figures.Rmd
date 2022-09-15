@@ -332,6 +332,7 @@ levels(pt_meta_wo6$group4vsother)
 levels(pt_meta_wo6$group4vsother)<-c("group4",rep("others",3))
 chisq.test(pt_meta_wo6$Toxicity,pt_meta_wo6$group4vsother)
 pt_meta_wo6$res<-as.factor(pt_meta_wo6$BOR)
+levels(pt_meta_wo6$BOR)
 levels(pt_meta_wo6$res)<-c("CR/PR","SD/PD","CR/PR","SD/PD")
 chisq.test(pt_meta_wo6$res,pt_meta_wo6$group4vsother)
 ```
@@ -357,18 +358,26 @@ os <- Surv(data_table$OSmos, data_table$OSevent)
 model_fit <- survfit(os ~ group4vsother,data = data_table)
 model_fit
 
-#ggsurvplot(model_fit,pval = TRUE)
-
 my.labs = c("Group4 (n=26)", "Others (n=24)")
 
 ggsurvplot(survfit(Surv(OSmos, OSevent)~group4vsother, data=data_table), censor.shape="|", censor.size=4, data=data_table, legend.labs=my.labs, xlab="Time(mos)", surv.median.line="none", pval=TRUE, xlim=c(0,50), break.time.by=12 )+ylab("Overall Survival Probability")
-#survdiff(os ~ group4vsother,data=data_table) 
 
 pfs <- Surv(data_table$PFSmos, data_table$PFSevent)
 model_fit2 <- survfit(pfs ~ group4vsother, data = data_table)
 model_fit2
 
-#ggsurvplot(model_fit2,pval = TRUE)+ylab("progression free Probability")
 ggsurvplot(survfit(Surv(PFSmos, PFSevent)~group4vsother, data=data_table), censor.shape="|", censor.size=4, data=data_table, legend.labs=my.labs, xlab="Time(mos)", surv.median.line="none",  pval=TRUE, xlim=c(0,50), break.time.by=12)+ylab("Progression Free Survival Probability")
 ```
 
+
+```{r}
+table(data_table$Group)
+
+survfit(Surv(OSmos, OSevent)~Group, data=data_table)
+
+ggsurvplot(survfit(Surv(OSmos, OSevent)~Group, data=data_table), censor.shape="|", censor.size=4, data=data_table, xlab="Time(mos)", surv.median.line="none", pval=TRUE, xlim=c(0,50), break.time.by=12 )+ylab("Overall Survival Probability")
+
+survfit(Surv(PFSmos, PFSevent)~Group, data=data_table)
+
+ggsurvplot(survfit(Surv(PFSmos, PFSevent)~Group, data=data_table), censor.shape="|", censor.size=4, data=data_table, xlab="Time(mos)", surv.median.line="none",  pval=TRUE, xlim=c(0,50), break.time.by=12)+ylab("Progression Free Survival Probability")
+```
