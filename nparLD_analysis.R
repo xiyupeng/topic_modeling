@@ -32,21 +32,32 @@ for (c in plot_clusters){
   print(re)
 }
 
+### across response
 for (c in plot_clusters){
   re<-merge.data.sub.reformat %>% filter(cluster == c) %>% nparLD(freq ~ res*time, data = .,subject = "pt",description = FALSE)
   print(c)
   print(re)
 }
 
+### across toxicity
 for (c in plot_clusters){
   re<-merge.data.sub.reformat %>% filter(cluster == c) %>% nparLD(freq ~ tox*time, data = .,subject = "pt",description = FALSE)
   print(c)
   print(re)
 }
 
+### across time
+pvalues<-c()
+for (c in plot_clusters){
+  re<-merge.data.sub.reformat %>% filter(cluster == c) %>% nparLD(freq ~ time, data = .,subject = "pt",description = FALSE)
+  print(c)
+  print(re)
+  pvalues<-c(pvalues,re$ANOVA.test$`p-value`)
+}
+p.adjust(pvalues,method = "BH")
+names(pvalues)<-paste0("cluster",0:19)
 
 ## organize re$ANOVA.test and re$ANOVA.test.mod.Box into tables
-
 result<-list()
 
 for (c in plot_clusters){
