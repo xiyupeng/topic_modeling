@@ -6,7 +6,7 @@ navbar:
     - text: "Home"
       href: example.html
     - text: "scRNA-seq"
-      href: scRNA_seq_analysis
+      href: scRNA_seq_analysis.html
 output:
   html_document:
     theme: cosmo
