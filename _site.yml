@@ -1,0 +1,13 @@
+name: "example"
+output_dir: "docs"
+navbar:
+  title: "Example on liver Cancer dataset"
+  left:
+    - text: "Home"
+      href: example.html
+output:
+  html_document:
+    theme: cosmo
+    toc: true
+    highlight: textmate
+    css: styles.css
