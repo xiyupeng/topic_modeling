@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Analysis on a scRNA-seq data on liver tumor tissue</title>
+
+<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/united.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+<link rel="stylesheet" href="styles.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Example on liver Cancer dataset</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="example.html">Home</a>
+</li>
+<li>
+  <a href="scRNA_seq_analysis">scRNA-seq</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Analysis on a scRNA-seq data on liver tumor tissue</h1>
+
+</div>
+
+
+<p>Xiyu Peng</p>
+<ul>
+<li><p>liver cancer data</p></li>
+<li><p>heatmap</p></li>
+</ul>
+<p><img src="scRNA_seq_analysis_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<div id="number-of-topics-5" class="section level1">
+<h1>number of topics = 5</h1>
+<p><img src="scRNA_seq_analysis_files/figure-html/unnamed-chunk-6-1.png" width="480" /><img src="scRNA_seq_analysis_files/figure-html/unnamed-chunk-6-2.png" width="480" /></p>
+<div id="select-representative-clusters-with-lift" class="section level2">
+<h2>select representative clusters with lift</h2>
+<p><img src="scRNA_seq_analysis_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+</div>
+<div id="link-to-time-subtypes-identified-in-the-original-paper" class="section level2">
+<h2>Link to TIME subtypes identified in the original paper</h2>
+<ul>
+<li><p>TIME-IA</p></li>
+<li><p>TIME-ISM</p></li>
+<li><p>TIME-ISS</p></li>
+<li><p>TIME-IE</p></li>
+<li><p>TIME-IR</p></li>
+</ul>
+</div>
+<div id="link-to-patient-level-data" class="section level2">
+<h2>link to patient level data</h2>
+<ul>
+<li><p>Extract Gamma</p></li>
+<li><p>Incorporate Metadata</p></li>
+</ul>
+<pre><code>## [1] 120 147</code></pre>
+<ul>
+<li>Only use HCC, CHC, ICC subtypes</li>
+</ul>
+<p><img src="scRNA_seq_analysis_files/figure-html/unnamed-chunk-16-1.png" width="1152" /></p>
+</div>
+<div id="survival-analysis" class="section level2">
+<h2>survival analysis</h2>
+<ul>
+<li>our subgroups</li>
+</ul>
+<pre><code>## 
+## group1 group2 group3 group4 group5 
+##     34     20     21     29     16</code></pre>
+<p><img src="scRNA_seq_analysis_files/figure-html/unnamed-chunk-17-1.png" width="672" /><img src="scRNA_seq_analysis_files/figure-html/unnamed-chunk-17-2.png" width="672" /></p>
+<ul>
+<li>TIMELASER</li>
+</ul>
+<p><img src="scRNA_seq_analysis_files/figure-html/unnamed-chunk-18-1.png" width="672" /><img src="scRNA_seq_analysis_files/figure-html/unnamed-chunk-18-2.png" width="672" /></p>
+</div>
+<div id="univariate-cox-regression" class="section level2">
+<h2>Univariate cox regression</h2>
+<ul>
+<li>Overall Survival</li>
+</ul>
+<pre><code>## Call:
+## coxph(formula = os ~ topic1, data = clinical_data_merge_sub)
+## 
+##   n= 120, number of events= 40 
+## 
+##           coef exp(coef) se(coef)     z Pr(&gt;|z|)   
+## topic1 -2.1152    0.1206   0.7027 -3.01  0.00261 **
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##        exp(coef) exp(-coef) lower .95 upper .95
+## topic1    0.1206      8.291   0.03043    0.4781
+## 
+## Concordance= 0.675  (se = 0.039 )
+## Likelihood ratio test= 12.87  on 1 df,   p=3e-04
+## Wald test            = 9.06  on 1 df,   p=0.003
+## Score (logrank) test = 10.49  on 1 df,   p=0.001</code></pre>
+<pre><code>## Call:
+## coxph(formula = os ~ topic2, data = clinical_data_merge_sub)
+## 
+##   n= 120, number of events= 40 
+## 
+##          coef exp(coef) se(coef)     z Pr(&gt;|z|)  
+## topic2 1.1002    3.0047   0.6513 1.689   0.0912 .
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##        exp(coef) exp(-coef) lower .95 upper .95
+## topic2     3.005     0.3328    0.8384     10.77
+## 
+## Concordance= 0.618  (se = 0.043 )
+## Likelihood ratio test= 2.55  on 1 df,   p=0.1
+## Wald test            = 2.85  on 1 df,   p=0.09
+## Score (logrank) test = 2.92  on 1 df,   p=0.09</code></pre>
+<pre><code>## Call:
+## coxph(formula = os ~ topic3, data = clinical_data_merge_sub)
+## 
+##   n= 120, number of events= 40 
+## 
+##           coef exp(coef) se(coef)      z Pr(&gt;|z|)
+## topic3 -0.7325    0.4807   0.5773 -1.269    0.204
+## 
+##        exp(coef) exp(-coef) lower .95 upper .95
+## topic3    0.4807       2.08    0.1551      1.49
+## 
+## Concordance= 0.6  (se = 0.046 )
+## Likelihood ratio test= 1.74  on 1 df,   p=0.2
+## Wald test            = 1.61  on 1 df,   p=0.2
+## Score (logrank) test = 1.63  on 1 df,   p=0.2</code></pre>
+<pre><code>## Call:
+## coxph(formula = os ~ topic4, data = clinical_data_merge_sub)
+## 
+##   n= 120, number of events= 40 
+## 
+##           coef exp(coef) se(coef)      z Pr(&gt;|z|)
+## topic4 -0.5238    0.5923   0.7161 -0.731    0.465
+## 
+##        exp(coef) exp(-coef) lower .95 upper .95
+## topic4    0.5923      1.688    0.1456      2.41
+## 
+## Concordance= 0.509  (se = 0.041 )
+## Likelihood ratio test= 0.58  on 1 df,   p=0.4
+## Wald test            = 0.54  on 1 df,   p=0.5
+## Score (logrank) test = 0.54  on 1 df,   p=0.5</code></pre>
+<pre><code>## Call:
+## coxph(formula = os ~ topic5, data = clinical_data_merge_sub)
+## 
+##   n= 120, number of events= 40 
+## 
+##           coef exp(coef) se(coef)     z Pr(&gt;|z|)    
+## topic5  2.9958   20.0011   0.4784 6.262 3.81e-10 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##        exp(coef) exp(-coef) lower .95 upper .95
+## topic5        20       0.05     7.831     51.08
+## 
+## Concordance= 0.76  (se = 0.038 )
+## Likelihood ratio test= 30.22  on 1 df,   p=4e-08
+## Wald test            = 39.21  on 1 df,   p=4e-10
+## Score (logrank) test = 51.71  on 1 df,   p=6e-13</code></pre>
+<ul>
+<li>Progression-free Survival</li>
+</ul>
+<pre><code>## Call:
+## coxph(formula = pfs ~ topic1, data = clinical_data_merge_sub)
+## 
+##   n= 120, number of events= 61 
+## 
+##           coef exp(coef) se(coef)      z Pr(&gt;|z|)  
+## topic1 -0.9281    0.3953   0.4401 -2.109   0.0349 *
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##        exp(coef) exp(-coef) lower .95 upper .95
+## topic1    0.3953       2.53    0.1668    0.9365
+## 
+## Concordance= 0.631  (se = 0.035 )
+## Likelihood ratio test= 5  on 1 df,   p=0.03
+## Wald test            = 4.45  on 1 df,   p=0.03
+## Score (logrank) test = 4.58  on 1 df,   p=0.03</code></pre>
+<pre><code>## Call:
+## coxph(formula = pfs ~ topic2, data = clinical_data_merge_sub)
+## 
+##   n= 120, number of events= 61 
+## 
+##          coef exp(coef) se(coef)     z Pr(&gt;|z|)
+## topic2 0.6687    1.9516   0.5517 1.212    0.226
+## 
+##        exp(coef) exp(-coef) lower .95 upper .95
+## topic2     1.952     0.5124    0.6619     5.755
+## 
+## Concordance= 0.611  (se = 0.038 )
+## Likelihood ratio test= 1.37  on 1 df,   p=0.2
+## Wald test            = 1.47  on 1 df,   p=0.2
+## Score (logrank) test = 1.48  on 1 df,   p=0.2</code></pre>
+<pre><code>## Call:
+## coxph(formula = pfs ~ topic3, data = clinical_data_merge_sub)
+## 
+##   n= 120, number of events= 61 
+## 
+##           coef exp(coef) se(coef)     z Pr(&gt;|z|)
+## topic3 -0.6095    0.5436   0.4651 -1.31     0.19
+## 
+##        exp(coef) exp(-coef) lower .95 upper .95
+## topic3    0.5436       1.84    0.2185     1.353
+## 
+## Concordance= 0.582  (se = 0.038 )
+## Likelihood ratio test= 1.83  on 1 df,   p=0.2
+## Wald test            = 1.72  on 1 df,   p=0.2
+## Score (logrank) test = 1.73  on 1 df,   p=0.2</code></pre>
+<pre><code>## Call:
+## coxph(formula = pfs ~ topic4, data = clinical_data_merge_sub)
+## 
+##   n= 120, number of events= 61 
+## 
+##           coef exp(coef) se(coef)      z Pr(&gt;|z|)
+## topic4 -0.6075    0.5447   0.5985 -1.015     0.31
+## 
+##        exp(coef) exp(-coef) lower .95 upper .95
+## topic4    0.5447      1.836    0.1686      1.76
+## 
+## Concordance= 0.505  (se = 0.037 )
+## Likelihood ratio test= 1.14  on 1 df,   p=0.3
+## Wald test            = 1.03  on 1 df,   p=0.3
+## Score (logrank) test = 1.04  on 1 df,   p=0.3</code></pre>
+<pre><code>## Call:
+## coxph(formula = pfs ~ topic5, data = clinical_data_merge_sub)
+## 
+##   n= 120, number of events= 61 
+## 
+##          coef exp(coef) se(coef)     z Pr(&gt;|z|)    
+## topic5  2.495    12.127    0.438 5.697 1.22e-08 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##        exp(coef) exp(-coef) lower .95 upper .95
+## topic5     12.13    0.08246     5.139     28.62
+## 
+## Concordance= 0.688  (se = 0.032 )
+## Likelihood ratio test= 25.38  on 1 df,   p=5e-07
+## Wald test            = 32.45  on 1 df,   p=1e-08
+## Score (logrank) test = 39.05  on 1 df,   p=4e-10</code></pre>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
