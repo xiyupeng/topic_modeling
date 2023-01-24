@@ -2,6 +2,9 @@ Latent Dirichlet Allocation with application on Longitudinal Flow Cytometry Data
 =======
 
 This repository contains all codes used in the paper: 
+“Uncovering the hidden structure of dynamic T cell
+composition in peripheral blood during cancer immunotherapy: a topic modeling
+approach”
 
 # Prerequisites
 
@@ -34,5 +37,7 @@ approach”. (Under Review)
 # Contact us
 
 Xiyu Peng
+
 pansypeng124@gmail.com
+
 pengx1@mskcc.org
