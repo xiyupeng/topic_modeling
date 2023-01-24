@@ -36,8 +36,7 @@ approach”. (Under Review)
 
 # Contact us
 
-Xiyu Peng
+If you have any problems, please contact:
 
-pansypeng124@gmail.com
+Xiyu Peng (pansypeng124@gmail.com, pengx1@mskcc.org)
 
-pengx1@mskcc.org
