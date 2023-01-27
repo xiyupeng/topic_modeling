@@ -8,7 +8,7 @@ approach”
 
 # Prerequisites
 
-Below are three core R packages we used for LDA Analysis
+Below are three core R packages we used for LDA analysis
 
 ```
 library(topicmodels)
@@ -19,8 +19,8 @@ library(tidytext)
 We use the R package *topicmodels* for model inference, R package *slam* for preparing the required input data, R package *tidytext* for extracting the output data. 
 The three R packages are important for reproducing the LDA analysis we described in the paper on other datasets. 
 
-There are also other R packages we used in the script, like *Seurat* for UMAP visualization and clustering, *ComplexHeatmap* for heatmaps. 
-Other clustering methods, like FlowSOM, or visualization tools can also be used.
+There are also other R packages we used in the script, like *Seurat* package for UMAP visualization and clustering, *ComplexHeatmap* for heatmaps. 
+you can also use other clustering methods, like FlowSOM, or visualization tools instead.
 
 
 # Preparing input
@@ -29,9 +29,9 @@ In text mining, LDA requires the input as a document-by-term count matrix, where
 
 Before applying the LDA model, we also need to prepare the cell type-by-sample count matrix as the input of LDA. 
 One common approach to get the cell type count matrix is to pool all cells together and do the clustering, if there is no batch effect. 
-`X50_single_cell_analysis` contains all codes that we used to cluster the 17M+ cells.
-We use the Louvain method in *Seurat* package to cluster cells and prepare the cell type-by-sample matrix. 
-
+`X50_single_cell_analysis.R` contains all codes that we used to cluster the 17M+ cells.
+The Louvain method in *Seurat* package was used to cluster cells and prepare the cell type-by-sample matrix. 
+Cell types were manually annotated based on their marker expression.
 
 # Usage
 
