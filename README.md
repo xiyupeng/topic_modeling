@@ -27,8 +27,8 @@ you can also use other clustering methods, like FlowSOM, or visualization tools 
 
 In text mining, LDA requires the input as a document-by-term count matrix, where each row represent each document,each column represent each term, each entry in the matrix is the number of occurrences of each term (a word is a single occurrence of a term). Motivated by the similarities between text data mining and single-cell analysis, for single-cell analysis, LDA consider cells as words, cell types as terms, patient samples as documents, biological processes as topics.
 
-Before applying the LDA model, we also need to prepare the cell type-by-sample count matrix as the input of LDA. 
-One common approach to get the cell type count matrix is to pool all cells together and do the clustering, if there is no batch effect. 
+Before applying the LDA model to single-cell datasets, we need to prepare the cell type-by-sample count matrix as the input of LDA. 
+One common approach to obtain the cell type count matrix is to pool all cells together and do the clustering (Before doing the pooled clustering, you may want to check if there is a batch effect between samples). 
 `X50_single_cell_analysis.R` contains all codes that we used to cluster the 17M+ cells.
 The Louvain method in *Seurat* package was used to cluster cells and prepare the cell type-by-sample matrix. 
 Cell types were manually annotated based on their marker expression.
