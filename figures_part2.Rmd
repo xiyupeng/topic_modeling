@@ -54,7 +54,7 @@ downsamplebygroup<-function(obj, metadata_column,downsample = 30000,...){
 
 * pt 17-162-05
 
-```{r,fig.width=12,fig.height=4}
+```{r}
 pt1716205<-readRDS(file = "C:/Users/pengx1/OneDrive - Memorial Sloan Kettering Cancer Center/Desktop/seurat_objects/seurat_pt17-162-05redo_v2.rds")
 Idents(pt1716205)<-"pool_cluster"
 
@@ -63,7 +63,15 @@ selected_cols<-c("gray",hue_pal()(20)[c(5,9,10,13,17)])
 pt1716205$activation_group<-Idents(pt1716205)
 pt1716205$activation_group[!Idents(pt1716205)%in% c(4,8,12,16,9)]<-0
 #DimPlot(pt1716205, label = T, group.by = "activation_group",cols = selected_cols)
-DimPlot(subset(pt1716205, idents = 0:19),reduction = "umap", label = TRUE)
+current.cluster.ids <- 0:27
+new.cluster.ids <- c("0:CD4 Tn","1:CD4 Tem/cm","2:CD4 Tn","3:CD8 Temra","4:CD4 Tem/cm","5:CD8 Temra","6:CD8 Tn","7:CD4 Tcm (CXCR5+)","8:CD4 Tem/cm (KI67+)","9:Treg","10:CD8 Tem","11:Naive Treg","12:CD8 Tem (KI67+)","13:CD4-CD8-","14:CD4 Tem (Cytotoxic)","15:CD8 Tem (PD1+)","16:CD4-CD8- (KI67+)","17:CD4-CD8-","18:CD4-CD8- (KI67+)","19:CD4+CD8+",rep("others",8))
+old_labels<- Idents(pt1716205)
+Idents(pt1716205) <- plyr::mapvalues(x = Idents(pt1716205), from = current.cluster.ids, to = new.cluster.ids)
+DimPlot(subset(pt1716205, idents = new.cluster.ids[1:20]),reduction = "umap", label = TRUE)
+Idents(pt1716205)<-old_labels
+```
+
+```{r,fig.width=12,fig.height=4}
 p_list<-downsamplebygroup(subset(pt1716205, idents = 0:19),"time",20000, group.by = "activation_group",cols = selected_cols,label = TRUE)
 layout1<-"
 ABC
