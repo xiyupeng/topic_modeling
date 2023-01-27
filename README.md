@@ -20,7 +20,7 @@ We use the R package *topicmodels* for model inference, R package *slam* for pre
 The three R packages are important for reproducing the LDA analysis we described in the paper on other datasets. 
 
 There are also other R packages we used in the script, like *Seurat* package for UMAP visualization and clustering, *ComplexHeatmap* for heatmaps. 
-you can also use other clustering methods, like FlowSOM, or visualization tools instead.
+You can also use other clustering methods, like FlowSOM, or other visualization tools instead.
 
 
 # Preparing input
@@ -35,12 +35,12 @@ Cell types were manually annotated based on their marker expression.
 
 # Usage
 
-For more details of the usage of the LDA method,
+For more detailed usage of the LDA method,
 please check the [tutorial](https://xiyupeng.github.io/LDA_examples/), where we show two examples of the 
 application of LDA on single-cell dataset:
 
 - scRNA-seq data of liver cancer patients. (Data from a Nature [paper](https://www.nature.com/articles/s41586-022-05400-x#Bib1))
-- Longitudinal flow cytometry data of melanoma patients. (the paper)
+- Longitudinal flow cytometry data of melanoma patients. (this paper)
 
 # Data
 
@@ -49,6 +49,8 @@ Additional data used to generate figures were provided in:
 Peng, Xiyu (2023), “flow cytometry dataset of melanoma patients”, Mendeley Data, V1, doi: 10.17632/d7nkgfhc8z.1
 
 # Citation
+
+If you find the method useful, pleas cite:
 
 X. Peng, J. Lee, M. Adamow, C. Maher, M. A. Postow, M. Callahan, K. S.
 Panageas, R. Shen (2022+). “Uncovering the hidden structure of dynamic T cell
