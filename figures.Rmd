@@ -140,6 +140,7 @@ lift_top_terms %>%
   xlab("lift (log-ratio of topic weight over T cell cluster frequency)")+ylab("T cell cluster")
 ```
 
+
 * Fig.4a. heatmap showing gamma (exclude pt 17-162-08 with only one sample)
 
 ```{r}
@@ -214,6 +215,50 @@ ComplexHeatmap::pheatmap(t(gamma_wide_wna_reorder[re$order,1:3]),cluster_rows = 
 ComplexHeatmap::pheatmap(t(gamma_wide_wna_reorder[re$order,4:6]),cluster_rows = FALSE, cluster_cols = FALSE, drop_levels = TRUE,annotation_colors = ann_colors,annotation_col = pt_meta_wo6[re$order,2:5],col = colorRampPalette(c("navy", "white", "firebrick3"))(50),fontsize_col= 5,labels_row = c("week0","week3","week6"),treeheight_col = 10)
 ComplexHeatmap::pheatmap(t(gamma_wide_wna_reorder[re$order,7:9]),cluster_rows = FALSE, drop_levels = TRUE,annotation_colors = ann_colors,annotation_col = pt_meta_wo6[re$order,2:5],col = colorRampPalette(c("navy", "white", "firebrick3"))(50),fontsize_col= 5,labels_row = c("week0","week3","week6"),treeheight_col = 10,cluster_cols = FALSE)
 ```
+
+* Fig.3c. Topic fraction of each sample
+
+
+```{r}
+## add back data of 17-162-08, which has only week 0 data
+my_orders<- c(rownames(gamma_wide_wna_reorder)[re$order],"17-162-08")
+my_labels<-gsub("17-162*","",my_orders)
+my_labels<-gsub("-","",my_labels)
+
+## week 0
+topic_fraction<-gamma_wide_wna %>% 
+  select("1.A","2.A","3.A","pt") %>% 
+  gather(key = "Topic",value = "fraction",-pt) %>% na.omit()
+topic_fraction$Topic<-as.factor(topic_fraction$Topic)
+levels(topic_fraction$Topic)<-c("Activation topic", "Naive topic", "Exhaustion topic")
+
+p1<-ggbarplot(topic_fraction,"pt","fraction",fill = "Topic",palette = c("#D55E00", "#009E73","#0072B2"),color = "Topic")+scale_x_discrete(limits = my_orders[my_orders %in% topic_fraction$pt],labels = my_labels[my_orders %in% topic_fraction$pt])+ylab("Topic fraction")+xlab("Patient")
+p1<-ggpar(p1,legend = "none",title = "week 0",font.xtickslab  = c(5,"bold"),xtickslab.rt = 45)
+
+## week 3
+topic_fraction<-gamma_wide_wna %>% 
+  select("1.B","2.B","3.B","pt") %>% 
+  gather(key = "Topic",value = "fraction",-pt) %>% na.omit()
+topic_fraction$Topic<-as.factor(topic_fraction$Topic)
+levels(topic_fraction$Topic)<-c("Activation topic", "Naive topic", "Exhaustion topic")
+
+p2<-ggbarplot(topic_fraction,"pt","fraction",fill = "Topic",palette = c("#D55E00", "#009E73","#0072B2"),color = "Topic")+scale_x_discrete(limits = my_orders[my_orders %in% topic_fraction$pt],labels = my_labels[my_orders %in% topic_fraction$pt])+ylab("Topic fraction")+xlab("Patient")
+p2<-ggpar(p2,legend = "none",title = "week 3",font.xtickslab  = c(5,"bold"),xtickslab.rt = 45)
+
+## week 6
+topic_fraction<-gamma_wide_wna %>% 
+  select("1.C","2.C","3.C","pt") %>% 
+  gather(key = "Topic",value = "fraction",-pt) %>% na.omit()
+topic_fraction$Topic<-as.factor(topic_fraction$Topic)
+levels(topic_fraction$Topic)<-c("Activation topic", "Naive topic", "Exhaustion topic")
+
+p3<-ggbarplot(topic_fraction,"pt","fraction",fill = "Topic",palette = c("#D55E00", "#009E73","#0072B2"),color = "Topic")+scale_x_discrete(limits = my_orders[my_orders %in% topic_fraction$pt], labels = my_labels[my_orders %in% topic_fraction$pt])+ylab("Topic fraction")+xlab("Patient")
+p3<-ggpar(p3,legend = "none",title = "week 6",font.xtickslab  = c(5,"bold"),xtickslab.rt = 45)
+
+wrap_plots(p1,p2,p3)
+#ggsave("topic_figure.png",dpi = 600,width = 14, height = 7,units = "in")
+```
+
 
 * Fig 4b. topic evolution of three groups
 
