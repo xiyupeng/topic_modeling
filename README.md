@@ -44,7 +44,7 @@ application of LDA on single-cell dataset:
 
 # Data
 
-Additional data used to generate figures were provided in:
+Additional data used to generate figures are provided in:
 
 Peng, Xiyu (2023), “flow cytometry dataset of melanoma patients”, Mendeley Data, V1, doi: 10.17632/d7nkgfhc8z.1
 
