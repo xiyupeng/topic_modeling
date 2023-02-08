@@ -292,6 +292,7 @@ wrap_plots(p1,p2,p3,p4,nrow = 4)
 * Figure 5-7. Dynamic in topic proportions and representative cluster abundances
 
 ```{r}
+## activation topic
 colnames(para$topics)<-c("topic1","topic2","topic3")
 combined_data<-cbind(X50_res0.8,para$topics)
 combined_data$time<-as.factor(X50_res0.8$time)
@@ -304,6 +305,9 @@ for (cluster in select_cluster){
     ylab("Percentage")
   ps[[cluster]]<-p
 }
+### additional change
+ps[["X.cluster12"]]<-ps[["X.cluster12"]]+ylim(0,16.5)
+## naive topic
 select_cluster<- c("X.cluster2","X.cluster6","X.cluster0","X.cluster11")
 colors<-seurat_colors[c(3,7,1,12)]
 names(colors)<-select_cluster
@@ -312,6 +316,7 @@ for (cluster in select_cluster){
     ylab("Percentage")
   ps[[cluster]]<-p
 }
+## exhaustion topic
 select_cluster<- c("X.cluster14","X.cluster3","X.cluster5","X.cluster13")
 colors<-seurat_colors[c(15,4,6,14)]
 names(colors)<-select_cluster
@@ -342,8 +347,21 @@ ps[[11]]<-ps[[11]]+ggtitle("3:CD8 Temra")
 ps[[12]]<-ps[[12]]+ggtitle("5:CD8 Temra")
 ps[[13]]<-ps[[13]]+ggtitle("13:CD4-CD8-")
 wrap_plots(ps[10:13] ,guides = 'collect',nrow = 1)
-
 ```
+
+```{r}
+### for each cluster, calculate the fold change from wk0 to wk3
+combined_data %>% 
+  dplyr::select(pt,week,starts_with("X.")) %>%
+  filter(week %in% c(0,3)) %>%
+  arrange(pt,week)->cleaned_data
+cleaned_data %>%  filter(pt %in% names(which(colSums(table(cleaned_data$week,cleaned_data$pt))==2)))->cleaned_data
+## the ratio
+ratio<-cleaned_data[seq(0,nrow(cleaned_data),2),-1]/cleaned_data[seq(1,nrow(cleaned_data),2),-1]
+apply(ratio,2,mean)
+apply(ratio,2,sd)/sqrt(nrow(cleaned_data)/2)
+```
+
 
 ```{r}
 pss<-list()
