@@ -50,7 +50,7 @@ Peng, Xiyu (2023), “flow cytometry dataset of melanoma patients”, Mendeley D
 
 # Citation
 
-If you find the method useful, pleas cite:
+If you find the method useful, please cite:
 
 X. Peng, J. Lee, M. Adamow, C. Maher, M. A. Postow, M. Callahan, K. S.
 Panageas, R. Shen (2022+). “Uncovering the hidden structure of dynamic T cell
