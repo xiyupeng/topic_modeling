@@ -46,14 +46,14 @@ application of LDA on single-cell dataset:
 
 Additional data used to generate figures are provided in:
 
-Peng, Xiyu (2023), “flow cytometry dataset of melanoma patients”, Mendeley Data, V1, doi: 10.17632/d7nkgfhc8z.1
+Peng, Xiyu (2023), “flow cytometry dataset of melanoma PBMC”, Mendeley Data, V1, doi: 10.17632/d7nkgfhc8z.1
 
 # Citation
 
 If you find the method useful, please cite:
 
 X. Peng, J. Lee, M. Adamow, C. Maher, M. A. Postow, M. Callahan, K. S.
-Panageas, R. Shen (2022+). “Uncovering the hidden structure of dynamic T cell
+Panageas, R. Shen (2023+). “Uncovering the hidden structure of dynamic T cell
 composition in peripheral blood during cancer immunotherapy: a topic modeling
 approach”. (Under Review)
 
