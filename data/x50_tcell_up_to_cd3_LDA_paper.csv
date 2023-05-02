@@ -1,0 +1,6 @@
+alias,pop,parent,dims,gating_method,gating_args,collapseDataForGating,groupBy,preprocessing_method,preprocessing_args
+nonDebris,+,root,FSC-A,gate_mindensity,,,,,
+singlets,+,nonDebris,"FSC-A,FSC-H",singletGate,,,,,
+cd14-cd19-,-,singlets,CD14 19,gate_mindensity,,,,,
+live,-,cd14-cd19-,L_D,gate_mindensity,,,,,
+cd3,+,live,CD3,gate_mindensity,,TRUE,4,,
