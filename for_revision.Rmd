@@ -1,0 +1,110 @@
+---
+title: "Additional analysis for the revision"
+output:
+    html_document:
+      toc: true
+      toc_float: true 
+      theme: united
+---
+Xiyu Peng
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_knit$set(root.dir= normalizePath('..'))
+knitr::opts_chunk$set(error = FALSE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+```{r}
+library(corrplot)
+library(tidyverse)
+library(pheatmap)
+```
+
+* input the data
+
+```{r}
+X50_res0.8 <- read.csv("~/flow_cytometry/lda/flow_17162_rerun_cluster_res1.5_and_gating_ratio.csv")
+## prepare data matrix
+X50_res0.8 %>% select(starts_with("cluster"))->data_matrix
+data_matrix<-data_matrix[,1:20]
+```
+
+## Hierarchical clustering analysis
+
+* simple hierarchical clustering based on correlation
+
+```{r}
+M<-cor(data_matrix)
+corrplot(M, method = "circle",order = "AOE")
+#hclust on correlation matrix
+ComplexHeatmap::pheatmap(M)
+M<-cor(data_matrix/rowSums(data_matrix))
+ComplexHeatmap::pheatmap(M,heatmap_legend_param = list(title = "Correlation"))
+ComplexHeatmap::pheatmap(data_matrix/rowSums(data_matrix),clustering_distance_cols = "correlation")
+```
+
+* simple hierarchical clustering based on euclidean distance
+
+```{r}
+ComplexHeatmap::pheatmap(data_matrix/rowSums(data_matrix),heatmap_legend_param = list(title = "Abundance"))
+```
+
+* simple hierarchical clustering based on euclidean distance (scaled on column)
+
+```{r}
+ComplexHeatmap::pheatmap(data_matrix/rowSums(data_matrix),scale = "column")
+```
+
+* clustering on different data points
+```{r}
+ann_colors = list(
+  BOR = c(CR = "white",PR = "white", SD = "firebrick",PD = "firebrick"),
+  Toxicity = c(N = "white",Y = "darkblue"),
+  topics = c(`1` = "#0072B2", `2` = "#009E73",`3` = "#D55E00",Activation = "#0072B2", Naive = "#009E73", Exhaustion = "#D55E00" ),
+  Immunotype = c("LAG-" =  "#555599", "LAG+" =  "#66BBBB", PRO = "#DD4444"),
+  Group = c(group1 = "#7570B3", group2 = "#E7298A", group3 = "#66A61E",group4 = "#D95F02")
+)
+
+```
+
+```{r}
+X50_res0.8 %>% select(pt, time, paste0("X.cluster",0:19)) %>% arrange(pt, time)%>%reshape(.,timevar = "time",idvar = "pt",direction = "wide") %>% filter(pt != "17-162-08") ->cluster_freq_wide 
+rownames(cluster_freq_wide)<-cluster_freq_wide$pt
+pt_meta<-X50_res0.8 %>% select(pt,imtype,tox,BOR) %>% arrange(pt) %>% distinct(pt,.keep_all = TRUE)
+colnames(pt_meta)<-c("pt","Immunotype","Toxicity","BOR")
+rownames(pt_meta)<-pt_meta$pt
+alternative<-colnames(cluster_freq_wide)
+alternative<-gsub("A","week0",alternative)
+alternative<-gsub("B","week3",alternative)
+alternative<-gsub("C","week6",alternative)
+alternative<-gsub("X.","",alternative)
+colnames(cluster_freq_wide)<-alternative
+ComplexHeatmap::pheatmap(cluster_freq_wide[,-1],annotation_row = pt_meta[-6,2:4],annotation_colors = ann_colors,clustering_distance_rows = "correlation",heatmap_legend_param = list(title = "Abundance"))
+ComplexHeatmap::pheatmap(cluster_freq_wide[,-1],annotation_row = pt_meta[-6,2:4],annotation_colors = ann_colors,clustering_distance_rows = "correlation",cluster_cols = FALSE)
+```
+
+
+## UMAP based on 27 genes
+
+```{r}
+library(Seurat)
+pt1716205<-readRDS(file = "C:/Users/pengx1/OneDrive - Memorial Sloan Kettering Cancer Center/Desktop/reports/seurat_objects/seurat_pt17-162-05redo_v2.rds")
+Idents(pt1716205)<-"pool_cluster"
+cells<-sample(colnames(subset(pt1716205, idents = 0:19)),60000)
+DimPlot(pt1716205[,cells],reduction = "umap", label = TRUE)
+```
+
+
+```{r,eval=FALSE}
+genes<-rownames(pt1716205)
+pt1716205 <- RunUMAP(pt1716205, features = genes,min.dist = 0.3)
+pt1716205_newUMAP<-pt1716205
+saveRDS(pt1716205_newUMAP,file = "C:/Users/pengx1/OneDrive - Memorial Sloan Kettering Cancer Center/Desktop/seurat_objects/seurat_pt17-162-05redo_v2_newUMAP.rds")
+```
+
+```{r}
+pt1716205_newUMAP<-readRDS(file = "C:/Users/pengx1/OneDrive - Memorial Sloan Kettering Cancer Center/Desktop/reports/seurat_objects/seurat_pt17-162-05redo_v2_newUMAP.rds")
+DimPlot(pt1716205_newUMAP[,cells],reduction = "umap", label = TRUE)
+```
