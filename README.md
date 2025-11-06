@@ -6,6 +6,12 @@ This repository contains all codes used in the paper:
 composition in peripheral blood during cancer immunotherapy: a topic modeling
 approach”
 
+X. Peng, J. Lee, M. Adamow, C. Maher, M. A. Postow, M. Callahan, K. S. Panageas, R. Shen (2023). “Uncovering the hidden structure of dynamic T cell composition in peripheral blood during cancer immunotherapy: a topic modeling approach”. Cell Reports Methods. [doi.org/10.1016/j.crmeth.2023.100546](https://www.sciencedirect.com/science/article/pii/S2667237523001832?via%3Dihub)
+
+<div>
+<img src="https://github.com/xiyupeng/LDA_examples/blob/main/TopicFlow.png" width="1000" height="600"/>
+</div>
+
 # Prerequisites
 
 Below are three core R packages we used for LDA analysis
